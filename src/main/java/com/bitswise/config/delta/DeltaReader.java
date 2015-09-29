@@ -1,6 +1,5 @@
 package com.bitswise.config.delta;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.bitswise.config.Config;
@@ -15,16 +14,17 @@ public class DeltaReader {
 		Map<String, Entity> upsertedMap = delta.get(DeltaRootKey.UPSERTED);
 		Map<String, Entity> deletedMap = delta.get(DeltaRootKey.DELETED);
 		
-		Map<String, Entity> oldMap = new HashMap<String, Entity>();
+		TreeToMapVisitor visitor = new TreeToMapVisitor();
 		Config newConfig;
 		if (oldConfig != null) {
-			oldConfig.write(oldMap);
+			oldConfig.accept(visitor);
 			// create a new config instance, which starts as a clone of the old config
 			newConfig = new Config(oldConfig);
 		} else {
 			// create a new config instance, which starts off in its initial state
 			newConfig = new Config();
 		}
+		Map<String, Entity> oldMap = visitor.getMap();
 		
 		for (Entity entity : upsertedMap.values()) {
 			Entity oldEntity = oldMap.get(entity.getId());

@@ -2,9 +2,9 @@ package com.bitswise.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Stack;
 
 import com.bitswise.config.delta.ConfigInfo;
 
@@ -66,6 +66,20 @@ public class Config extends Entity {
 			ConfigEntry lhsConfigEntry = new ConfigEntry(rhsConfigEntry);
 			entries.put(lhsConfigEntry.getId(), lhsConfigEntry);
 		}
+	}
+	
+	public void accept(ConfigVisitor visitor) {
+		Stack<Config> configStack = new Stack<Config>();
+		configStack.push(this);
+		do {
+			Config config = configStack.pop();
+			if (!visitor.visit(config)) {
+				return;
+			}
+			for (Config c : config.getAllConfigs()) {
+				configStack.push(c);
+			}
+		} while (!configStack.isEmpty());
 	}
 	
 	public String getParentId() {
@@ -181,17 +195,6 @@ public class Config extends Entity {
 		}
 		return null;	
 	}
-
-	public void write(Map<String, Entity> map) {
-		map.put(getId(), this);
-		for (ConfigEntry entry : entries.values()) {
-			map.put(entry.getId(), entry);
-		}
-		for (Config config : configs.values()) {
-			config.write(map);
-		}
-	}
-		
 
 	@Override
 	public int hashCode() {

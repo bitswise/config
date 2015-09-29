@@ -6,6 +6,7 @@ import java.util.Stack;
 
 import com.bitswise.config.Config;
 import com.bitswise.config.ConfigEntry;
+import com.bitswise.config.ConfigVisitor;
 import com.bitswise.config.DeltaRootKey;
 import com.bitswise.config.Entity;
 
@@ -25,13 +26,18 @@ public class DeltaWriter {
 
 		delta.put(DeltaRootKey.UPSERTED, upsertedMap);
 		delta.put(DeltaRootKey.DELETED, deletedMap);
-
-		Map<String, Entity> oldMap = new HashMap<String, Entity>();
-		Map<String, Entity> newMap = new HashMap<String, Entity>();
+		
+		TreeToMapVisitor oldConfigVisitor = new TreeToMapVisitor();
 		if (oldConfig != null) {
-			oldConfig.write(oldMap);
+			oldConfig.accept(oldConfigVisitor);
 		}
-		newConfig.write(newMap);
+		
+		TreeToMapVisitor newConfigVisitor = new TreeToMapVisitor();
+		newConfig.accept(newConfigVisitor);
+		
+		Map<String, Entity> oldMap = oldConfigVisitor.getMap();
+		Map<String, Entity> newMap = newConfigVisitor.getMap();
+
 		for (Entity entity : newMap.values()) {
 			Entity oldEntity = oldMap.get(entity.getId());
 			if (oldEntity == null) {
